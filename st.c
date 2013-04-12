@@ -44,7 +44,7 @@ static double gauss(int n, int m);
 
 void st(int len, int lo, int hi, double *data, double *result)
 {
-  int i, k, n, l2;
+  int i, j, k, n, l2;
   double s, *p;
   FILE *wisdom;
   static int planlen = 0;
@@ -160,11 +160,19 @@ void st(int len, int lo, int hi, double *data, double *result)
     }
 
     for (i = 0; i < len; i++) {
+      /* RI: This shifts in frequency domain 
       s = g[i];
       k = n + i;
       if (k >= len) k -= len;
       G[i][0] = H[k][0] * s;
       G[i][1] = H[k][1] * s;
+      */
+      /* without shifting */
+      j = i-n;
+      if (j<0) j += len;
+      s = g[j];
+      G[i][0] = H[i][0] * s;
+      G[i][1] = H[i][1] * s;
     }
 
     /* Inverse FFT the result to get the next row. */
@@ -288,7 +296,6 @@ void hilbert(int len, double *data, double *result)
 
   /* Keep the arrays and plans around from last time, since this
      is a very common case. Reallocate them if they change. */
-
   if (len != planlen && planlen > 0) {
     fftw_destroy_plan(p1);
     fftw_destroy_plan(p2);
