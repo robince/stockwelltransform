@@ -202,6 +202,7 @@ void ist(int len, int lo, int hi, double *data, double *result)
 {
   int i, n, l2;
   double *p;
+  double fr, fi, dr, di, ef;
   FILE *wisdom;
   static int planlen = 0;
   static fftw_plan p2;
@@ -256,8 +257,16 @@ void ist(int len, int lo, int hi, double *data, double *result)
   p = data;
   for (n = lo; n <= hi; n++) {
     for (i = 0; i < len; i++) {
-      H[n][0] += *p++;
-      H[n][1] += *p++;
+      /* multiply by complex exponential factor
+       * to perform frequency shift required
+       * for inverse */
+      dr = *p++;
+      di = *p++;
+      ef = -2 * M_PI * n * i / len;
+      fr = cos(ef);
+      fi = sin(ef);
+      H[n][0] += dr*fr - di*fi;
+      H[n][1] += dr*fi + di*fr;
     }
   }
 
