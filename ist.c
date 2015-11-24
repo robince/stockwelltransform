@@ -3,7 +3,7 @@
 #include <mex.h>
 #include <matrix.h>
 
-extern void st(int len, int lo, int hi, double *data, double *result);
+extern void ist(int len, int lo, int hi, double *data, double *result);
 
 /* [st_matrix, times, frequencies] = st(data, lo, hi, srate) */
 
@@ -11,20 +11,16 @@ void mexFunction(int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 {
 	int i, j, n, len, lo, hi;
 	double lof, hif, srate, t;
-	double *data, *result, *times, *freqs, *d, *s;
+	double *data, *result, *times, *freqs, *dr, *di, *s;
 
-	if (nlhs > 3 || nrhs != 4) {
+	if (nlhs > 1 || nrhs != 4) {
 		mexErrMsgTxt("Wrong number of arguments to function st");
 	}
 
-	if (mxGetM(prhs[0]) != 1) {
-		mexErrMsgTxt("st input 1 must be a row vector");
-	}
 	if (!mxIsDouble(prhs[0])) {
 		mexErrMsgTxt("st input 1 must be real");
 	}
 	len = mxGetN(prhs[0]);
-	data = mxGetPr(prhs[0]);
 
 	if (mxGetM(prhs[1]) != 1 || mxGetN(prhs[1]) != 1) {
 		mexErrMsgTxt("st input 2 must be a scalar");
@@ -51,52 +47,33 @@ void mexFunction(int nlhs, mxArray **plhs, int nrhs, const mxArray **prhs)
 	}
 	n = hi - lo + 1;
 
+	if (mxGetM(prhs[0]) != n) {
+		mexErrMsgTxt("spectrum does not match hi/lo specification");
+	}
+
 	/* Allocate space for the result matrix. */
 
-	plhs[0] = mxCreateDoubleMatrix(n, len, mxCOMPLEX);
+	plhs[0] = mxCreateDoubleMatrix(1, len, mxREAL);
 
-	/* Create row vectors that contain the times and frequencies
-	corresponding to the columns and rows of the matrix. */
 
-	plhs[1] = mxCreateDoubleMatrix(1, len, mxREAL);
-	plhs[2] = mxCreateDoubleMatrix(1, n, mxREAL);
+	/* Create temporary storage for the IST */
+	data = (double *)mxMalloc(n * len * sizeof(double) * 2);
 
-	d = mxGetPr(plhs[1]);
-	t = 1. / srate;
-	for (i = 0; i < len; i++) {
-		*d++ = i * t;
-	}
-
-	d = mxGetPr(plhs[2]);
-	t = (hif - lof) / (n - 1);
-	for (i = 0; i < n; i++) {
-		*d++ = lof + i * t;
-	}
-
-	/* Create temporary storage for the ST and calculate it. */
-
-	result = (double *)mxMalloc(n * len * sizeof(double) * 2);
-
-	st(len, lo, hi, data, result);
-
-	/* Copy the real and imaginary parts into the output matrix. */
-
-	d = mxGetPr(plhs[0]);
-	s = result;
+	/* Copy the real and imaginary parts into the ist input matrix matrix. */
+	dr = mxGetPr(prhs[0]);
+	di = mxGetPi(prhs[0]);
+	s = data;
 	for (j = 0; j < n; j++) {
 		for (i = 0; i < len; i++) {
-			d[i * n + j] = *s;
-			s += 2;
-		}
-	}
-	d = mxGetPi(plhs[0]);
-	s = result + 1;
-	for (j = 0; j < n; j++) {
-		for (i = 0; i < len; i++) {
-			d[i * n + j] = *s;
-			s += 2;
+			*s = dr[i * n + j];
+			s++;
+			*s = di[i * n + j];
+			s++;
 		}
 	}
 
-	mxFree(result);
+	result = mxGetPr(plhs[0]);
+	ist(len, lo, hi, data, result);
+
+	mxFree(data);
 }
