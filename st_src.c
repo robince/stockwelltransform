@@ -14,6 +14,9 @@ void set_wisfile(void)
 
   if (Wisfile) return;
   home = getenv("HOME");
+  if (home == NULL) {
+      home = getenv("USERPROFILE");
+  }
   Wisfile = (char *)malloc(strlen(home) + WISLEN + 1);
   sprintf(Wisfile, Wistemplate, home);
 }
@@ -46,7 +49,6 @@ void st(int len, int lo, int hi, double *data, double *result)
 {
   int i, k, n, l2;
   double s, *p;
-  FILE *wisdom;
   static int planlen = 0;
   static double *g;
   static fftw_plan p1, p2;
@@ -81,11 +83,7 @@ void st(int len, int lo, int hi, double *data, double *result)
     /* Get any accumulated wisdom. */
 
     set_wisfile();
-    wisdom = fopen(Wisfile, "r");
-    if (wisdom) {
-      fftw_import_wisdom_from_file(wisdom);
-      fclose(wisdom);
-    }
+    fftw_import_wisdom_from_filename(Wisfile);
 
     /* Set up the fftw plans. */
 
@@ -94,11 +92,8 @@ void st(int len, int lo, int hi, double *data, double *result)
 
     /* Save the wisdom. */
 
-    wisdom = fopen(Wisfile, "w");
-    if (wisdom) {
-      fftw_export_wisdom_to_file(wisdom);
-      fclose(wisdom);
-    }
+
+    fftw_export_wisdom_to_filename(Wisfile);
   }
 
   /* Convert the input to complex. Also compute the mean. */
