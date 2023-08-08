@@ -11,3 +11,16 @@ The Matlab wrapper `st.c` is `st_wrapper.c` from the [NIMH MEG](http://kurage.ni
 
 I made a small change to avoid shifting the Hilbert transform in frequency when multiplying by the Gaussian window. 
 Avoiding this shift means the normal Hilbert instaneous phase comes out in the spectrum.
+
+
+## Installation
+
+`make.m` has an editor cell for each platform with details of prerequisites to install and mex calls to compile the stockwell transform functions. 
+
+## Usage
+
+- `st_examples.m` has some examples of how to call the function.
+
+`[st_data,st_times,st_frequencies] = st(data,min_F,max_F,Fs);`
+
+
